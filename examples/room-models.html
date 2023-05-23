@@ -16,36 +16,54 @@
 <html lang="en">
   <head>
     <!-- Required meta tags -->
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
-    <link rel="stylesheet" href="resources/examples.css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+      integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="resources/examples.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans"
+      rel="stylesheet"
+    />
 
     <title>Room Models</title>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
       <a class="navbar-brand" href="index.html">
-        <img src="resources/logo30.png" width="30" height="30" class="d-inline-block align-top">
+        <img
+          src="resources/logo30.png"
+          width="30"
+          height="30"
+          class="d-inline-block align-top"
+        />
       </a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="hello-world.html">Hello World</a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link" href="vs-pannernode.html">vs. PannerNode</a>
           </li>
           <li class="nav-item active">
             <a class="nav-link" href="room-models.html">Room Models</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="birds.html">Flock of Birds</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="treasure-hunt.html">Treasure Hunt</a>
@@ -56,42 +74,68 @@
         </ul>
       </div>
     </nav>
-
     <div class="container mt-5">
       <div class="row justify-content-center">
         <div class="col-lg-5 mb-2">
           <h1>Room Models</h1>
           <p class="lead">
-            <img src="resources/headphones.svg" class="icon-lg" alt="headphones">
+            <img
+              src="resources/headphones.svg"
+              class="icon-lg"
+              alt="headphones"
+            />
             Best experienced over headphones.
           </p>
           <p>
             Click (or touch) and drag the sources
-            <img src="resources/volume-high.svg" class="icon" alt="source" id="sourceAIcon">,
-            <img src="resources/microphone.svg" class="icon" alt="source" id="sourceBIcon">,
-            <img src="resources/musical-note.svg" class="icon" alt="source" id="sourceCIcon">
+            <img
+              src="resources/volume-high.svg"
+              class="icon"
+              alt="source"
+              id="sourceAIcon"
+            />,
+            <img
+              src="resources/microphone.svg"
+              class="icon"
+              alt="source"
+              id="sourceBIcon"
+            />,
+            <img
+              src="resources/musical-note.svg"
+              class="icon"
+              alt="source"
+              id="sourceCIcon"
+            />
             and the listener
-            <img src="resources/person.svg" class="icon" alt="source" id="listenerIcon">,
-            to move them front-back/left-right around the room.
-            Select various options of room sizes and wall materials.
+            <img
+              src="resources/person.svg"
+              class="icon"
+              alt="source"
+              id="listenerIcon"
+            />, to move them front-back/left-right around the room. Select
+            various options of room sizes and wall materials.
           </p>
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label for="roomDimensionsSelect" class="col-form-label">Room Dimensions</label>
+              <label for="roomDimensionsSelect" class="col-form-label"
+                >Room Dimensions</label
+              >
               <select id="roomDimensionsSelect" class="form-control">
-                <option value="small" selected>Small</option>
+                <option value="small">Small</option>
                 <option value="medium">Medium</option>
                 <option value="large">Large</option>
-                <option value="huge">Huge</option>
+                <option value="huge" selected>Huge</option>
               </select>
             </div>
             <div class="form-group col-md-6">
-              <label for="roomMaterialsSelect" class="col-form-label">Wall Materials</label>
+              <label for="roomMaterialsSelect" class="col-form-label"
+                >Wall Materials</label
+              >
               <select id="roomMaterialsSelect" class="form-control">
-                <option value="brick" selected>Brick</option>
+                <option value="brick">Brick</option>
                 <option value="curtains">Curtains</option>
                 <option value="marble">Marble</option>
-                <option value="outside">Outdoors</option>
+                <option value="outside" selected>Outdoors</option>
               </select>
             </div>
           </div>
@@ -99,38 +143,120 @@
             <div class="col-md-3 mb-2">
               <div class="input-group">
                 <span class="input-group-addon">
-                  <img src="resources/volume-high.svg" class="icon-button">
+                  <img src="resources/volume-high.svg" class="icon-button" />
                 </span>
                 <span class="input-group-btn">
-                  <button type="button" class="btn btn-primary" id="sourceAButton">Play</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="sourceAButton"
+                  >
+                    Play
+                  </button>
                 </span>
               </div>
             </div>
             <div class="col-md-3 mb-2">
               <div class="input-group">
                 <span class="input-group-addon">
-                  <img src="resources/microphone.svg" class="icon-button">
+                  <img src="resources/microphone.svg" class="icon-button" />
                 </span>
                 <span class="input-group-btn">
-                  <button type="button" class="btn btn-primary" id="sourceBButton">Play</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="sourceBButton"
+                  >
+                    Play
+                  </button>
                 </span>
               </div>
             </div>
             <div class="col-md-3 mb-2">
               <div class="input-group">
                 <span class="input-group-addon">
-                  <img src="resources/musical-note.svg" class="icon-button">
+                  <img src="resources/musical-note.svg" class="icon-button" />
                 </span>
                 <span class="input-group-btn">
-                  <button type="button" class="btn btn-primary" id="sourceCButton">Play</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="sourceCButton"
+                  >
+                    Play
+                  </button>
                 </span>
               </div>
             </div>
           </div>
         </div>
         <div class="col-lg-5 text-center">
-          <div style="width:100%">
+          <div style="width: 100%">
             <canvas id="canvas"></canvas>
+          </div>
+        </div>
+      </div>
+      <div style="margin-left: 90px; margin-top: 30px">
+        <h3>non-spatial audio sources:</h3>
+        <div class="row" style="width: 500px">
+          <div class="col-md-3 mb-2">
+            <div class="input-group">
+              <span class="input-group-addon">
+                <img src="resources/volume-high.svg" class="icon-button" />
+              </span>
+              <span class="input-group-btn">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="sourceDButton"
+                >
+                  Play
+                </button>
+              </span>
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <div class="input-group">
+              <span class="input-group-addon">
+                <img src="resources/microphone.svg" class="icon-button" />
+              </span>
+              <span class="input-group-btn">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="sourceEButton"
+                >
+                  Play
+                </button>
+              </span>
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <div class="input-group">
+              <span class="input-group-addon">
+                <img src="resources/musical-note.svg" class="icon-button" />
+              </span>
+              <span class="input-group-btn">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="sourceFButton"
+                >
+                  Play
+                </button>
+              </span>
+            </div>
+          </div>
+          <div style="padding-left: 15px">
+            Volume:
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value="50"
+              class="slider"
+              id="volumeForOther"
+            />
           </div>
         </div>
       </div>
@@ -139,8 +265,20 @@
     <script src="../build/resonance-audio.min.js"></script>
     <script src="resources/js/canvas-control.js"></script>
     <script src="resources/js/room-models.js"></script>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+      integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+      integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>

@@ -60,9 +60,12 @@ let materials = {
     back: "transparent",
   },
 };
-let dimensionSelection = "small";
-let materialSelection = "brick";
+let dimensionSelection = "huge";
+let materialSelection = "outside";
 let audioReady = false;
+
+let normalAudioElements = [];
+let normalSourceIds = ["sourceDButton", "sourceEButton", "sourceFButton"];
 
 /**
  * @private
@@ -105,8 +108,8 @@ function initAudio() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
   let audioSources = [
     "resources/jinen.mp4",
+    "resources/lau.mp3",
     "resources/speech-sample.wav",
-    "resources/music.wav",
   ];
   let audioElementSources = [];
   for (let i = 0; i < audioSources.length; i++) {
@@ -130,6 +133,15 @@ function initAudio() {
   }
   scene.output.connect(audioContext.destination);
 
+  // Normal audio sources that we just do volume on
+  for (let i = 0; i < audioSources.length; i++) {
+    normalAudioElements[i] = document.createElement("audio");
+    normalAudioElements[i].src = audioSources[i];
+    normalAudioElements[i].crossOrigin = "anonymous";
+    normalAudioElements[i].load();
+    normalAudioElements[i].loop = true;
+  }
+
   audioReady = true;
 }
 
@@ -138,7 +150,7 @@ let onLoad = function () {
   for (let i = 0; i < sourceIds.length; i++) {
     let button = document.getElementById(sourceIds[i]);
     button.addEventListener("click", function (event) {
-      switch (event.target.textContent) {
+      switch (event.target.textContent.trim()) {
         case "Play":
           {
             if (!audioReady) {
@@ -158,6 +170,38 @@ let onLoad = function () {
     });
   }
 
+  for (let i = 0; i < normalSourceIds.length; i++) {
+    let button = document.getElementById(normalSourceIds[i]);
+    button.addEventListener("click", function (event) {
+      switch (event.target.textContent.trim()) {
+        case "Play":
+          {
+            if (!audioReady) {
+              initAudio();
+            }
+            event.target.textContent = "Pause";
+            normalAudioElements[i].play();
+          }
+          break;
+        case "Pause":
+          {
+            event.target.textContent = "Play";
+            normalAudioElements[i].pause();
+          }
+          break;
+      }
+    });
+  }
+
+  document
+    .getElementById("volumeForOther")
+    .addEventListener("input", (event) => {
+      const newVolume = parseInt(event.target.value) / 100;
+      for (let i = 0; i < normalAudioElements.length; i++) {
+        normalAudioElements[i].volume = newVolume;
+      }
+    });
+
   document
     .getElementById("roomDimensionsSelect")
     .addEventListener("change", function (event) {
@@ -174,16 +218,16 @@ let onLoad = function () {
   let elements = [
     {
       icon: "sourceAIcon",
-      x: 0.25,
-      y: 0.25,
+      x: 0.1,
+      y: 0.5,
       radius: 0.04,
       alpha: 0.75,
       clickable: true,
     },
     {
       icon: "sourceBIcon",
-      x: 0.75,
-      y: 0.25,
+      x: 0.9,
+      y: 0.5,
       radius: 0.04,
       alpha: 0.75,
       clickable: true,
