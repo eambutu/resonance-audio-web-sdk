@@ -19,15 +19,13 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
-
+"use strict";
 
 // Internal dependencies.
-const Directivity = require('./directivity.js');
-const Attenuation = require('./attenuation.js');
-const Encoder = require('./encoder.js');
-const Utils = require('./utils.js');
-
+const Directivity = require("./directivity.js");
+const Attenuation = require("./attenuation.js");
+const Encoder = require("./encoder.js");
+const Utils = require("./utils.js");
 
 /**
  * Options for constructing a new Source.
@@ -63,7 +61,6 @@ const Utils = require('./utils.js');
  * is an omnidirectional source. Defaults to
  * {@linkcode Utils.DEFAULT_SOURCE_WIDTH DEFAULT_SOURCE_WIDTH}.
  */
-
 
 /**
  * @class Source
@@ -163,10 +160,12 @@ function Source(scene, options) {
 
   // Assign initial conditions.
   this.setPosition(
-    options.position[0], options.position[1], options.position[2]);
+    options.position[0],
+    options.position[1],
+    options.position[2]
+  );
   this.input.gain.value = options.gain;
-};
-
+}
 
 /**
  * Set source's position (in meters), where origin is the center of
@@ -175,7 +174,7 @@ function Source(scene, options) {
  * @param {Number} y
  * @param {Number} z
  */
-Source.prototype.setPosition = function(x, y, z) {
+Source.prototype.setPosition = function (x, y, z) {
   // Assign new position.
   this._position[0] = x;
   this._position[1] = y;
@@ -183,23 +182,28 @@ Source.prototype.setPosition = function(x, y, z) {
 
   // Handle far-field effect.
   let distance = this._scene._room.getDistanceOutsideRoom(
-    this._position[0], this._position[1], this._position[2]);
-    let gain = _computeDistanceOutsideRoom(distance);
+    this._position[0],
+    this._position[1],
+    this._position[2]
+  );
+  let gain = _computeDistanceOutsideRoom(distance);
   this._toLate.gain.value = gain;
   this._toEarly.gain.value = gain;
 
   this._update();
 };
 
-
 // Update the source when changing the listener's position.
-Source.prototype._update = function() {
+Source.prototype._update = function () {
   // Compute distance to listener.
   for (let i = 0; i < 3; i++) {
     this._dx[i] = this._position[i] - this._scene._listener.position[i];
   }
-  let distance = Math.sqrt(this._dx[0] * this._dx[0] +
-    this._dx[1] * this._dx[1] + this._dx[2] * this._dx[2]);
+  let distance = Math.sqrt(
+    this._dx[0] * this._dx[0] +
+      this._dx[1] * this._dx[1] +
+      this._dx[2] * this._dx[2]
+  );
   if (distance > 0) {
     // Normalize direction vector.
     this._dx[0] /= distance;
@@ -208,10 +212,13 @@ Source.prototype._update = function() {
   }
 
   // Compuete angle of direction vector.
-  let azimuth = Math.atan2(-this._dx[0], this._dx[2]) *
-    Utils.RADIANS_TO_DEGREES;
-  let elevation = Math.atan2(this._dx[1], Math.sqrt(this._dx[0] * this._dx[0] +
-    this._dx[2] * this._dx[2])) * Utils.RADIANS_TO_DEGREES;
+  let azimuth =
+    Math.atan2(-this._dx[0], this._dx[2]) * Utils.RADIANS_TO_DEGREES;
+  let elevation =
+    Math.atan2(
+      this._dx[1],
+      Math.sqrt(this._dx[0] * this._dx[0] + this._dx[2] * this._dx[2])
+    ) * Utils.RADIANS_TO_DEGREES;
 
   // Set distance/directivity/direction values.
   this._attenuation.setDistance(distance);
@@ -219,44 +226,39 @@ Source.prototype._update = function() {
   this._encoder.setDirection(azimuth, elevation);
 };
 
-
 /**
  * Set source's rolloff.
  * @param {string} rolloff
  * Rolloff model to use, chosen from options in
  * {@linkcode Utils.ATTENUATION_ROLLOFFS ATTENUATION_ROLLOFFS}.
  */
-Source.prototype.setRolloff = function(rolloff) {
+Source.prototype.setRolloff = function (rolloff) {
   this._attenuation.setRolloff(rolloff);
 };
-
 
 /**
  * Set source's minimum distance (in meters).
  * @param {Number} minDistance
  */
-Source.prototype.setMinDistance = function(minDistance) {
+Source.prototype.setMinDistance = function (minDistance) {
   this._attenuation.minDistance = minDistance;
 };
-
 
 /**
  * Set source's maximum distance (in meters).
  * @param {Number} maxDistance
  */
-Source.prototype.setMaxDistance = function(maxDistance) {
+Source.prototype.setMaxDistance = function (maxDistance) {
   this._attenuation.maxDistance = maxDistance;
 };
-
 
 /**
  * Set source's gain (linear).
  * @param {Number} gain
  */
-Source.prototype.setGain = function(gain) {
+Source.prototype.setGain = function (gain) {
   this.input.gain.value = gain;
 };
-
 
 /**
  * Set the source's orientation using forward and up vectors.
@@ -267,8 +269,14 @@ Source.prototype.setGain = function(gain) {
  * @param {Number} upY
  * @param {Number} upZ
  */
-Source.prototype.setOrientation = function(forwardX, forwardY, forwardZ,
-    upX, upY, upZ) {
+Source.prototype.setOrientation = function (
+  forwardX,
+  forwardY,
+  forwardZ,
+  upX,
+  upY,
+  upZ
+) {
   this._forward[0] = forwardX;
   this._forward[1] = forwardY;
   this._forward[2] = forwardZ;
@@ -278,7 +286,6 @@ Source.prototype.setOrientation = function(forwardX, forwardY, forwardZ,
   this._right = Utils.crossProduct(this._forward, this._up);
 };
 
-
 // TODO(bitllama): Make sure this works with Three.js as intended.
 /**
  * Set source's position and orientation using a
@@ -286,7 +293,7 @@ Source.prototype.setOrientation = function(forwardX, forwardY, forwardZ,
  * @param {Float32Array} matrix4
  * The Matrix4 representing the object position and rotation in world space.
  */
-Source.prototype.setFromMatrix = function(matrix4) {
+Source.prototype.setFromMatrix = function (matrix4) {
   this._right[0] = matrix4.elements[0];
   this._right[1] = matrix4.elements[1];
   this._right[2] = matrix4.elements[2];
@@ -304,20 +311,21 @@ Source.prototype.setFromMatrix = function(matrix4) {
 
   // Update position.
   this.setPosition(
-    matrix4.elements[12], matrix4.elements[13], matrix4.elements[14]);
+    matrix4.elements[12],
+    matrix4.elements[13],
+    matrix4.elements[14]
+  );
 };
-
 
 /**
  * Set the source width (in degrees). Where 0 degrees is a point source and 360
  * degrees is an omnidirectional source.
  * @param {Number} sourceWidth (in degrees).
  */
-Source.prototype.setSourceWidth = function(sourceWidth) {
+Source.prototype.setSourceWidth = function (sourceWidth) {
   this._encoder.setSourceWidth(sourceWidth);
   this.setPosition(this._position[0], this._position[1], this._position[2]);
 };
-
 
 /**
  * Set source's directivity pattern (defined by alpha), where 0 is an
@@ -328,11 +336,10 @@ Source.prototype.setSourceWidth = function(sourceWidth) {
  * @param {Number} sharpness
  * Determines the sharpness of the directivity pattern (1 to Inf).
  */
-Source.prototype.setDirectivityPattern = function(alpha, sharpness) {
+Source.prototype.setDirectivityPattern = function (alpha, sharpness) {
   this._directivity.setPattern(alpha, sharpness);
   this.setPosition(this._position[0], this._position[1], this._position[2]);
 };
-
 
 /**
  * Determine the distance a source is outside of a room. Attenuate gain going
@@ -352,6 +359,5 @@ function _computeDistanceOutsideRoom(distance) {
   }
   return gain;
 }
-
 
 module.exports = Source;

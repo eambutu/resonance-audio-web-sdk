@@ -66,6 +66,7 @@ let audioReady = false;
 
 let normalAudioElements = [];
 let normalSourceIds = ["sourceDButton", "sourceEButton", "sourceFButton"];
+let normalDirectivity = [];
 
 /**
  * @private
@@ -99,6 +100,29 @@ function updatePositions(elements) {
       scene.setListenerPosition(x, y, z);
     }
   }
+}
+
+function updateDirections() {
+  if (!audioReady) return;
+
+  let x = document.getElementById("directionX")?.value;
+  let z = document.getElementById("directionZ")?.value;
+  x = x ? parseFloat(x) : 0;
+  z = z ? parseFloat(z) : 0;
+
+  console.log("in updatedirections", x, z);
+
+  /*
+  for (let i = 0; i < soundSources.length; i++) {
+    soundSources[i].setOrientation(x, 0, z, 0, 1, 0);
+  }
+  */
+  normalDirectivity[0].computeAngle([x, 0, z], [0, 0, 1]);
+  console.log(normalDirectivity[0]);
+  /*
+  for (let i = 0; i < normalDirectivity.length; i++) {
+  }
+  */
 }
 
 /**
@@ -140,6 +164,15 @@ function initAudio() {
     normalAudioElements[i].crossOrigin = "anonymous";
     normalAudioElements[i].load();
     normalAudioElements[i].loop = true;
+
+    normalDirectivity[i] = new ResonanceAudio.Directivity(audioContext, {
+      alpha: 1,
+    });
+    let normalAudioElementSource = audioContext.createMediaElementSource(
+      normalAudioElements[i]
+    );
+    normalAudioElementSource.connect(normalDirectivity[i].input);
+    normalDirectivity[i].output.connect(audioContext.destination);
   }
 
   audioReady = true;
@@ -213,6 +246,13 @@ let onLoad = function () {
     .addEventListener("change", function (event) {
       selectRoomProperties();
     });
+
+  document
+    .getElementById("directionX")
+    .addEventListener("change", (ev) => updateDirections());
+  document
+    .getElementById("directionZ")
+    .addEventListener("change", (ev) => updateDirections());
 
   let canvas = document.getElementById("canvas");
   let elements = [

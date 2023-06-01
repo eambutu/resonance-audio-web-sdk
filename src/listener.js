@@ -19,14 +19,12 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
-
+"use strict";
 
 // Internal dependencies.
-const Omnitone = require('../node_modules/omnitone/build/omnitone.js');
-const Encoder = require('./encoder.js');
-const Utils = require('./utils.js');
-
+const Omnitone = require("../node_modules/omnitone/build/omnitone.min.esm.js");
+const Encoder = require("./encoder.js");
+const Utils = require("./utils.js");
 
 /**
  * @class Listener
@@ -101,15 +99,14 @@ function Listener(context, options) {
 
   // Select the appropriate HRIR filters using 2-channel chunks since
   // multichannel audio is not yet supported by a majority of browsers.
-  this._ambisonicOrder =
-    Encoder.validateAmbisonicOrder(options.ambisonicOrder);
+  this._ambisonicOrder = Encoder.validateAmbisonicOrder(options.ambisonicOrder);
 
-    // Create audio nodes.
+  // Create audio nodes.
   this._context = context;
   if (this._ambisonicOrder == 1) {
-    this._renderer = Omnitone.Omnitone.createFOARenderer(context, {});
+    this._renderer = Omnitone.default.createFOARenderer(context, {});
   } else if (this._ambisonicOrder > 1) {
-    this._renderer = Omnitone.Omnitone.createHOARenderer(context, {
+    this._renderer = Omnitone.default.createHOARenderer(context, {
       ambisonicOrder: this._ambisonicOrder,
     });
   }
@@ -122,7 +119,7 @@ function Listener(context, options) {
 
   // Initialize Omnitone (async) and connect to audio graph when complete.
   let that = this;
-  this._renderer.initialize().then(function() {
+  this._renderer.initialize().then(function () {
     // Connect pre-rotated soundfield to renderer.
     that.input.connect(that._renderer.input);
 
@@ -138,10 +135,15 @@ function Listener(context, options) {
   });
 
   // Set orientation and update rotation matrix accordingly.
-  this.setOrientation(options.forward[0], options.forward[1],
-    options.forward[2], options.up[0], options.up[1], options.up[2]);
-};
-
+  this.setOrientation(
+    options.forward[0],
+    options.forward[1],
+    options.forward[2],
+    options.up[0],
+    options.up[1],
+    options.up[2]
+  );
+}
 
 /**
  * Set the source's orientation using forward and up vectors.
@@ -152,10 +154,18 @@ function Listener(context, options) {
  * @param {Number} upY
  * @param {Number} upZ
  */
-Listener.prototype.setOrientation = function(forwardX, forwardY, forwardZ,
-  upX, upY, upZ) {
-  let right = Utils.crossProduct([forwardX, forwardY, forwardZ],
-    [upX, upY, upZ]);
+Listener.prototype.setOrientation = function (
+  forwardX,
+  forwardY,
+  forwardZ,
+  upX,
+  upY,
+  upZ
+) {
+  let right = Utils.crossProduct(
+    [forwardX, forwardY, forwardZ],
+    [upX, upY, upZ]
+  );
   this._tempMatrix3[0] = right[0];
   this._tempMatrix3[1] = right[1];
   this._tempMatrix3[2] = right[2];
@@ -168,13 +178,12 @@ Listener.prototype.setOrientation = function(forwardX, forwardY, forwardZ,
   this._renderer.setRotationMatrix3(this._tempMatrix3);
 };
 
-
 /**
  * Set the listener's position and orientation using a Three.js Matrix4 object.
  * @param {Object} matrix4
  * The Three.js Matrix4 object representing the listener's world transform.
  */
-Listener.prototype.setFromMatrix = function(matrix4) {
+Listener.prototype.setFromMatrix = function (matrix4) {
   // Update ambisonic rotation matrix internally.
   this._renderer.setRotationMatrix4(matrix4.elements);
 
@@ -183,6 +192,5 @@ Listener.prototype.setFromMatrix = function(matrix4) {
   this.position[1] = matrix4.elements[13];
   this.position[2] = matrix4.elements[14];
 };
-
 
 module.exports = Listener;

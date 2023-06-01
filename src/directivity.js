@@ -19,11 +19,10 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
+"use strict";
 
 // Internal dependencies.
-const Utils = require('./utils.js');
-
+const Utils = require("./utils.js");
 
 /**
  * @class Directivity
@@ -75,7 +74,7 @@ function Directivity(context, options) {
   this._lowpass = context.createBiquadFilter();
 
   // Initialize filter coefficients.
-  this._lowpass.type = 'lowpass';
+  this._lowpass.type = "lowpass";
   this._lowpass.Q.value = 0;
   this._lowpass.frequency.value = context.sampleRate * 0.5;
 
@@ -87,7 +86,6 @@ function Directivity(context, options) {
   this.output = this._lowpass;
 }
 
-
 /**
  * Compute the filter using the source's forward orientation and the listener's
  * position.
@@ -95,19 +93,23 @@ function Directivity(context, options) {
  * @param {Float32Array} direction The direction from the source to the
  * listener.
  */
-Directivity.prototype.computeAngle = function(forward, direction) {
+Directivity.prototype.computeAngle = function (forward, direction) {
+  console.log("in compute angle, unnormalized ", forward, direction);
   let forwardNorm = Utils.normalizeVector(forward);
   let directionNorm = Utils.normalizeVector(direction);
+  console.log("in compute angle, with ", forwardNorm, directionNorm);
   let coeff = 1;
   if (this._alpha > Utils.EPSILON_FLOAT) {
-    let cosTheta = forwardNorm[0] * directionNorm[0] +
-      forwardNorm[1] * directionNorm[1] + forwardNorm[2] * directionNorm[2];
-    coeff = (1 - this._alpha) + this._alpha * cosTheta;
+    let cosTheta =
+      forwardNorm[0] * directionNorm[0] +
+      forwardNorm[1] * directionNorm[1] +
+      forwardNorm[2] * directionNorm[2];
+    coeff = 1 - this._alpha + this._alpha * cosTheta;
     coeff = Math.pow(Math.abs(coeff), this._sharpness);
+    console.log("here", cosTheta, coeff);
   }
   this._lowpass.frequency.value = this._context.sampleRate * 0.5 * coeff;
 };
-
 
 /**
  * Set source's directivity pattern (defined by alpha), where 0 is an
@@ -119,7 +121,7 @@ Directivity.prototype.computeAngle = function(forward, direction) {
  * Determines the sharpness of the directivity pattern (1 to Inf).
  * DEFAULT_DIRECTIVITY_SHARPNESS}.
  */
-Directivity.prototype.setPattern = function(alpha, sharpness) {
+Directivity.prototype.setPattern = function (alpha, sharpness) {
   // Clamp and set values.
   this._alpha = Math.min(1, Math.max(0, alpha));
   this._sharpness = Math.max(1, sharpness);
@@ -127,6 +129,5 @@ Directivity.prototype.setPattern = function(alpha, sharpness) {
   // Update angle calculation using new values.
   this.computeAngle([this._cosTheta * this._cosTheta, 0, 0], [1, 0, 0]);
 };
-
 
 module.exports = Directivity;
