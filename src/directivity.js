@@ -94,10 +94,8 @@ function Directivity(context, options) {
  * listener.
  */
 Directivity.prototype.computeAngle = function (forward, direction) {
-  console.log("in compute angle, unnormalized ", forward, direction);
   let forwardNorm = Utils.normalizeVector(forward);
   let directionNorm = Utils.normalizeVector(direction);
-  console.log("in compute angle, with ", forwardNorm, directionNorm);
   let coeff = 1;
   if (this._alpha > Utils.EPSILON_FLOAT) {
     let cosTheta =
@@ -106,9 +104,10 @@ Directivity.prototype.computeAngle = function (forward, direction) {
       forwardNorm[2] * directionNorm[2];
     coeff = 1 - this._alpha + this._alpha * cosTheta;
     coeff = Math.pow(Math.abs(coeff), this._sharpness);
-    console.log("here", cosTheta, coeff);
   }
+  console.log("in compute angle", forwardNorm, directionNorm);
   this._lowpass.frequency.value = this._context.sampleRate * 0.5 * coeff;
+  console.log("in compute angle freq", this._lowpass.frequency.value);
 };
 
 /**

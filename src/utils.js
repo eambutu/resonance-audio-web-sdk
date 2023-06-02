@@ -445,7 +445,6 @@ Utils.normalizeVector = function (v) {
     v[1] *= n;
     v[2] *= n;
   }
-  console.log("in normalize vector", n, Utils.EPSILON_FLOAT, v);
   return v;
 };
 

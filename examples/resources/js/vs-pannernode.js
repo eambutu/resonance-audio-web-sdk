@@ -10,7 +10,7 @@ let noneGain;
 let pannerGain;
 let foaGain;
 let toaGain;
-let dimensions = {width: 1, height: 1, depth: 1};
+let dimensions = { width: 1, height: 1, depth: 1 };
 let audioReady = false;
 
 /**
@@ -19,43 +19,42 @@ let audioReady = false;
  * @private
  */
 function selectRenderingMode(event) {
-  if (!audioReady)
-    return;
+  if (!audioReady) return;
 
-  switch (document.getElementById('renderingMode').value) {
-    case 'toa':
-    {
-      noneGain.gain.value = 0;
-      pannerGain.gain.value = 0;
-      foaGain.gain.value = 0;
-      toaGain.gain.value = 1;
-    }
-    break;
-    case 'foa':
-    {
-      noneGain.gain.value = 0;
-      pannerGain.gain.value = 0;
-      foaGain.gain.value = 1;
-      toaGain.gain.value = 0;
-    }
-    break;
-    case 'panner-node':
-    {
-      noneGain.gain.value = 0;
-      pannerGain.gain.value = 1;
-      foaGain.gain.value = 0;
-      toaGain.gain.value = 0;
-    }
-    break;
-    case 'none':
+  switch (document.getElementById("renderingMode").value) {
+    case "toa":
+      {
+        noneGain.gain.value = 0;
+        pannerGain.gain.value = 0;
+        foaGain.gain.value = 0;
+        toaGain.gain.value = 1;
+      }
+      break;
+    case "foa":
+      {
+        noneGain.gain.value = 0;
+        pannerGain.gain.value = 0;
+        foaGain.gain.value = 1;
+        toaGain.gain.value = 0;
+      }
+      break;
+    case "panner-node":
+      {
+        noneGain.gain.value = 0;
+        pannerGain.gain.value = 1;
+        foaGain.gain.value = 0;
+        toaGain.gain.value = 0;
+      }
+      break;
+    case "none":
     default:
-    {
-      noneGain.gain.value = 1;
-      pannerGain.gain.value = 0;
-      foaGain.gain.value = 0;
-      toaGain.gain.value = 0;
-    }
-    break;
+      {
+        noneGain.gain.value = 1;
+        pannerGain.gain.value = 0;
+        foaGain.gain.value = 0;
+        toaGain.gain.value = 0;
+      }
+      break;
   }
 }
 
@@ -65,13 +64,12 @@ function selectRenderingMode(event) {
  * @private
  */
 function updatePositions(elements) {
-  if (!audioReady)
-    return;
+  if (!audioReady) return;
 
   for (let i = 0; i < elements.length; i++) {
-    let x = (elements[i].x - 0.5) * dimensions.width / 2;
+    let x = ((elements[i].x - 0.5) * dimensions.width) / 2;
     let y = 0;
-    let z = (elements[i].y - 0.5) * dimensions.depth / 2;
+    let z = ((elements[i].y - 0.5) * dimensions.depth) / 2;
     if (i == 0) {
       pannerNode.setPosition(x, y, z);
       foaSource.setPosition(x, y, z);
@@ -89,15 +87,14 @@ function updatePositions(elements) {
  */
 function initAudio() {
   // Create <audio> streaming audio source.
-  audioContext = new (window.AudioContext || window.webkitAudioContext);
-  let audioSource = 'resources/cube-sound.wav';
-  audioElement = document.createElement('audio');
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  let audioSource = "resources/jinen.mp4";
+  audioElement = document.createElement("audio");
   audioElement.src = audioSource;
-  audioElement.crossOrigin = 'anonymous';
+  audioElement.crossOrigin = "anonymous";
   audioElement.load();
   audioElement.loop = true;
-  audioElementSource =
-    audioContext.createMediaElementSource(audioElement);
+  audioElementSource = audioContext.createMediaElementSource(audioElement);
 
   // Create gain nodes.
   noneGain = audioContext.createGain();
@@ -107,11 +104,11 @@ function initAudio() {
 
   // Initialize scene and create Source(s).
   // Initialize PannerNode/Listener
-  foaScene = new ResonanceAudio(audioContext, {ambisonicOrder: 1});
-  toaScene = new ResonanceAudio(audioContext, {ambisonicOrder: 3});
+  foaScene = new ResonanceAudio(audioContext, { ambisonicOrder: 1 });
+  toaScene = new ResonanceAudio(audioContext, { ambisonicOrder: 3 });
   pannerNode = audioContext.createPanner();
-  pannerNode.panningModel = 'HRTF';
-  pannerNode.distanceModel = 'inverse';
+  pannerNode.panningModel = "HRTF";
+  pannerNode.distanceModel = "inverse";
   pannerNode.refDistance = ResonanceAudio.Utils.DEFAULT_MIN_DISTANCE;
   pannerNode.maxDistance = ResonanceAudio.Utils.DEFAULT_MAX_DISTANCE;
   foaSource = foaScene.createSource();
@@ -134,35 +131,37 @@ function initAudio() {
   selectRenderingMode();
 }
 
-let onLoad = function() {
+let onLoad = function () {
   // Initialize play button functionality.
-  let sourcePlayback = document.getElementById('sourceButton');
-  sourcePlayback.onclick = function(event) {
+  let sourcePlayback = document.getElementById("sourceButton");
+  sourcePlayback.onclick = function (event) {
     switch (event.target.textContent) {
-      case 'Play': {
-        if (!audioReady) {
-          initAudio();
+      case "Play":
+        {
+          if (!audioReady) {
+            initAudio();
+          }
+          event.target.textContent = "Pause";
+          audioElement.play();
         }
-        event.target.textContent = 'Pause';
-        audioElement.play();
-      }
-      break;
-      case 'Pause': {
-        event.target.textContent = 'Play';
-        audioElement.pause();
-      }
-      break;
+        break;
+      case "Pause":
+        {
+          event.target.textContent = "Play";
+          audioElement.pause();
+        }
+        break;
     }
   };
 
   // Assign event handlers.
-  let renderingMode = document.getElementById('renderingMode');
-  renderingMode.addEventListener('change', selectRenderingMode);
+  let renderingMode = document.getElementById("renderingMode");
+  renderingMode.addEventListener("change", selectRenderingMode);
 
-  let canvas = document.getElementById('canvas');
+  let canvas = document.getElementById("canvas");
   let elements = [
     {
-      icon: 'sourceIcon',
+      icon: "sourceIcon",
       x: 0.25,
       y: 0.25,
       radius: 0.04,
@@ -170,7 +169,7 @@ let onLoad = function() {
       clickable: true,
     },
     {
-      icon: 'listenerIcon',
+      icon: "listenerIcon",
       x: 0.5,
       y: 0.5,
       radius: 0.04,
@@ -180,4 +179,4 @@ let onLoad = function() {
   ];
   new CanvasControl(canvas, elements, updatePositions);
 };
-window.addEventListener('load', onLoad);
+window.addEventListener("load", onLoad);

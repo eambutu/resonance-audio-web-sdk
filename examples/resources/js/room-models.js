@@ -102,27 +102,17 @@ function updatePositions(elements) {
   }
 }
 
-function updateDirections() {
+function updateDirections(x) {
   if (!audioReady) return;
-
-  let x = document.getElementById("directionX")?.value;
-  let z = document.getElementById("directionZ")?.value;
-  x = x ? parseFloat(x) : 0;
-  z = z ? parseFloat(z) : 0;
-
-  console.log("in updatedirections", x, z);
 
   /*
   for (let i = 0; i < soundSources.length; i++) {
     soundSources[i].setOrientation(x, 0, z, 0, 1, 0);
   }
   */
-  normalDirectivity[0].computeAngle([x, 0, z], [0, 0, 1]);
-  console.log(normalDirectivity[0]);
-  /*
   for (let i = 0; i < normalDirectivity.length; i++) {
+    normalDirectivity[i].computeAngle([x, 0, 1], [0, 0, 1]);
   }
-  */
 }
 
 /**
@@ -166,7 +156,8 @@ function initAudio() {
     normalAudioElements[i].loop = true;
 
     normalDirectivity[i] = new ResonanceAudio.Directivity(audioContext, {
-      alpha: 1,
+      alpha: 0.5,
+      sharpness: 5,
     });
     let normalAudioElementSource = audioContext.createMediaElementSource(
       normalAudioElements[i]
@@ -176,6 +167,8 @@ function initAudio() {
   }
 
   audioReady = true;
+
+  updateDirections(0);
 }
 
 let onLoad = function () {
@@ -249,10 +242,9 @@ let onLoad = function () {
 
   document
     .getElementById("directionX")
-    .addEventListener("change", (ev) => updateDirections());
-  document
-    .getElementById("directionZ")
-    .addEventListener("change", (ev) => updateDirections());
+    .addEventListener("change", (ev) =>
+      updateDirections(parseInt(ev.target.value))
+    );
 
   let canvas = document.getElementById("canvas");
   let elements = [
