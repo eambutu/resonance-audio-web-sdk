@@ -103,7 +103,7 @@ function Source(scene, options) {
     options.maxDistance = Utils.DEFAULT_MAX_DISTANCE;
   }
   if (options.rolloff == undefined) {
-    options.rolloff = Utils.DEFAULT_ROLLOFF;
+    options.rolloff = Utils.DEFAULT_ATTENTUATION_ROLLOFF;
   }
   if (options.gain == undefined) {
     options.gain = Utils.DEFAULT_SOURCE_GAIN;
