@@ -19,11 +19,10 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
+"use strict";
 
 // Internal dependencies.
-const Utils = require('./utils.js');
-
+const Utils = require("./utils.js");
 
 /**
  * @class EarlyReflections
@@ -83,9 +82,13 @@ function EarlyReflections(context, options) {
     options.coefficients = {};
     Object.assign(options.coefficients, Utils.DEFAULT_REFLECTION_COEFFICIENTS);
   }
+  if (options.delayMultiplier == undefined) {
+    options.delayMultiplier = 1;
+  }
 
   // Assign room's speed of sound.
   this.speedOfSound = options.speedOfSound;
+  this.delayMultiplier = options.delayMultiplier;
 
   // Create nodes.
   this.input = context.createGain();
@@ -98,10 +101,8 @@ function EarlyReflections(context, options) {
 
   // Connect audio graph for each wall reflection.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
-      this._delays[property] =
-        context.createDelay(Utils.MAX_DURATION);
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
+      this._delays[property] = context.createDelay(Utils.MAX_DURATION);
       this._gains[property] = context.createGain();
     }
   }
@@ -110,14 +111,13 @@ function EarlyReflections(context, options) {
   this._inverters.back = context.createGain();
 
   // Initialize lowpass filter.
-  this._lowpass.type = 'lowpass';
+  this._lowpass.type = "lowpass";
   this._lowpass.frequency.value = Utils.DEFAULT_REFLECTION_CUTOFF_FREQUENCY;
   this._lowpass.Q.value = 0;
 
   // Initialize encoder directions, set delay times and gains to 0.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       this._delays[property].delayTime.value = 0;
       this._gains[property].gain.value = 0;
     }
@@ -131,8 +131,7 @@ function EarlyReflections(context, options) {
   // Connect nodes.
   this.input.connect(this._lowpass);
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       this._lowpass.connect(this._delays[property]);
       this._delays[property].connect(this._gains[property]);
       this._gains[property].connect(this._merger, 0, 0);
@@ -167,7 +166,6 @@ function EarlyReflections(context, options) {
   this.setRoomProperties(options.dimensions, options.coefficients);
 }
 
-
 /**
  * Set the listener's position (in meters),
  * where [0,0,0] is the center of the room.
@@ -175,32 +173,44 @@ function EarlyReflections(context, options) {
  * @param {Number} y
  * @param {Number} z
  */
-EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
+EarlyReflections.prototype.setListenerPosition = function (x, y, z) {
   // Assign listener position.
   this._listenerPosition = [x, y, z];
 
   // Determine distances to each wall.
   let distances = {
-    left: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.width + x) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    right: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.width - x) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    front: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.depth + z) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    back: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.depth - z) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    down: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.height + y) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    up: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.height - y) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    left:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.width + x) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    right:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.width - x) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    front:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.depth + z) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    back:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.depth - z) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    down:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.height + y) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    up:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.height - y) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
   };
 
   // Assign delay & attenuation values using distances.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       // Compute and assign delay (in seconds).
-      let delayInSecs = distances[property] / this.speedOfSound;
+      let delayInSecs =
+        distances[property] / (this.speedOfSound * this.delayMultiplier);
       this._delays[property].delayTime.value = delayInSecs;
 
       // Compute and assign gain, uses logarithmic rolloff: "g = R / (d + 1)"
@@ -209,7 +219,6 @@ EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
     }
   }
 };
-
 
 /**
  * Set the room's properties which determines the characteristics of
@@ -222,8 +231,10 @@ EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
  * {@linkcode Utils.DEFAULT_REFLECTION_COEFFICIENTS
  * DEFAULT_REFLECTION_COEFFICIENTS}.
  */
-EarlyReflections.prototype.setRoomProperties = function(dimensions,
-                                                        coefficients) {
+EarlyReflections.prototype.setRoomProperties = function (
+  dimensions,
+  coefficients
+) {
   if (dimensions == undefined) {
     dimensions = {};
     Object.assign(dimensions, Utils.DEFAULT_ROOM_DIMENSIONS);
@@ -241,9 +252,27 @@ EarlyReflections.prototype.setRoomProperties = function(dimensions,
   this._halfDimensions.depth = dimensions.depth * 0.5;
 
   // Update listener position with new room properties.
-  this.setListenerPosition(this._listenerPosition[0],
-    this._listenerPosition[1], this._listenerPosition[2]);
+  this.setListenerPosition(
+    this._listenerPosition[0],
+    this._listenerPosition[1],
+    this._listenerPosition[2]
+  );
 };
 
+/**
+ * Sets the multiplier that changes the delay of reflection
+ * @param {Number} multiplier
+ */
+EarlyReflections.prototype.setDelayMultiplier = function (multiplier) {
+  console.log("in delay multiplier");
+  this.delayMultiplier = multiplier;
+
+  // Update listener position with new delay.
+  this.setListenerPosition(
+    this._listenerPosition[0],
+    this._listenerPosition[1],
+    this._listenerPosition[2]
+  );
+};
 
 module.exports = EarlyReflections;

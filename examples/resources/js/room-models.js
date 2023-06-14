@@ -102,19 +102,6 @@ function updatePositions(elements) {
   }
 }
 
-function updateDirections(x) {
-  if (!audioReady) return;
-
-  /*
-  for (let i = 0; i < soundSources.length; i++) {
-    soundSources[i].setOrientation(x, 0, z, 0, 1, 0);
-  }
-  */
-  for (let i = 0; i < normalDirectivity.length; i++) {
-    normalDirectivity[i].computeAngle([x, 0, 1], [0, 0, 1]);
-  }
-}
-
 /**
  * @private
  */
@@ -142,7 +129,7 @@ function initAudio() {
     ambisonicOrder: 1,
   });
   for (let i = 0; i < audioSources.length; i++) {
-    soundSources[i] = scene.createSource();
+    soundSources[i] = scene.createSource({ rolloff: "none" });
     audioElementSources[i].connect(soundSources[i].input);
   }
   scene.output.connect(audioContext.destination);
@@ -154,21 +141,9 @@ function initAudio() {
     normalAudioElements[i].crossOrigin = "anonymous";
     normalAudioElements[i].load();
     normalAudioElements[i].loop = true;
-
-    normalDirectivity[i] = new ResonanceAudio.Directivity(audioContext, {
-      alpha: 0.5,
-      sharpness: 5,
-    });
-    let normalAudioElementSource = audioContext.createMediaElementSource(
-      normalAudioElements[i]
-    );
-    normalAudioElementSource.connect(normalDirectivity[i].input);
-    normalDirectivity[i].output.connect(audioContext.destination);
   }
 
   audioReady = true;
-
-  updateDirections(0);
 }
 
 let onLoad = function () {
@@ -229,6 +204,52 @@ let onLoad = function () {
     });
 
   document
+    .getElementById("manualGainAdjust")
+    .addEventListener("input", (event) => {
+      const gain = parseFloat(event.target.value);
+      soundSources.forEach((source) => {
+        source._attenuation.setManualGain(gain);
+      });
+      updateStats();
+    });
+
+  document.getElementById("reverbDelay").addEventListener("input", (event) => {
+    const delayInSecs = parseFloat(event.target.value);
+    soundSources.forEach((source) => {
+      source.simpleReverb.setDelay(delayInSecs);
+    });
+    updateStats();
+  });
+
+  document.getElementById("reverbGain").addEventListener("input", (event) => {
+    const gain = parseFloat(event.target.value);
+    soundSources.forEach((source) => {
+      source.simpleReverb.setGain(gain);
+    });
+    updateStats();
+  });
+
+  document
+    .getElementById("reverbFreqCutoff")
+    .addEventListener("input", (event) => {
+      const freq = parseFloat(event.target.value);
+      soundSources.forEach((source) => {
+        source.simpleReverb.setFreq(freq);
+      });
+      updateStats();
+    });
+
+  document
+    .getElementById("generalFreqCutoff")
+    .addEventListener("input", (event) => {
+      const freq = parseFloat(event.target.value);
+      soundSources.forEach((source) => {
+        source.setCutoffFrequency(freq);
+      });
+      updateStats();
+    });
+
+  document
     .getElementById("roomDimensionsSelect")
     .addEventListener("change", function (event) {
       selectRoomProperties();
@@ -239,12 +260,6 @@ let onLoad = function () {
     .addEventListener("change", function (event) {
       selectRoomProperties();
     });
-
-  document
-    .getElementById("directionX")
-    .addEventListener("change", (ev) =>
-      updateDirections(parseInt(ev.target.value))
-    );
 
   let canvas = document.getElementById("canvas");
   let elements = [
@@ -285,4 +300,24 @@ let onLoad = function () {
 
   selectRoomProperties();
 };
+
+const updateStats = () => {
+  const gain = document.getElementById("manualGainAdjust").value;
+  const reverbDelay = document.getElementById("reverbDelay").value;
+  const reverbGain = document.getElementById("reverbGain").value;
+  const reverbFreq = document.getElementById("reverbFreqCutoff").value;
+  const generalFreq = document.getElementById("generalFreqCutoff").value;
+  document.getElementById("stats").innerText =
+    "Gain: " +
+    gain +
+    " Reverb Delay: " +
+    reverbDelay +
+    " Reverb Gain: " +
+    reverbGain +
+    " Reverb Freq: " +
+    reverbFreq +
+    " General Freq: " +
+    generalFreq;
+};
+
 window.addEventListener("load", onLoad);

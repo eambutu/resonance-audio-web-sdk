@@ -105,9 +105,7 @@ Directivity.prototype.computeAngle = function (forward, direction) {
     coeff = 1 - this._alpha + this._alpha * cosTheta;
     coeff = Math.pow(Math.abs(coeff), this._sharpness);
   }
-  console.log("in compute angle", forwardNorm, directionNorm);
   this._lowpass.frequency.value = this._context.sampleRate * 0.5 * coeff;
-  console.log("in compute angle freq", this._lowpass.frequency.value);
 };
 
 /**

@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -800,7 +800,7 @@ module.exports = Encoder;
 
 
 // Internal dependencies.
-const Omnitone = __webpack_require__(12);
+const Omnitone = __webpack_require__(13);
 const Encoder = __webpack_require__(1);
 const Utils = __webpack_require__(0);
 
@@ -2169,6 +2169,7 @@ const Directivity = __webpack_require__(5);
 const Attenuation = __webpack_require__(6);
 const Encoder = __webpack_require__(1);
 const Utils = __webpack_require__(0);
+const SimpleReverb = __webpack_require__(7);
 
 /**
  * Options for constructing a new Source.
@@ -2246,7 +2247,7 @@ function Source(scene, options) {
     options.maxDistance = Utils.DEFAULT_MAX_DISTANCE;
   }
   if (options.rolloff == undefined) {
-    options.rolloff = Utils.DEFAULT_ATTENTUATION_ROLLOFF;
+    options.rolloff = Utils.DEFAULT_ATTENUATION_ROLLOFF;
   }
   if (options.gain == undefined) {
     options.gain = Utils.DEFAULT_SOURCE_GAIN;
@@ -2289,6 +2290,7 @@ function Source(scene, options) {
   });
 
   // Connect nodes.
+  /*
   this.input.connect(this._toLate);
   this._toLate.connect(scene._room.late.input);
 
@@ -2299,6 +2301,25 @@ function Source(scene, options) {
   this._attenuation.output.connect(this._directivity.input);
   this._directivity.output.connect(this._encoder.input);
 
+  this._encoder.output.connect(scene._listener.input);
+  */
+
+  this.simpleReverb = new SimpleReverb(context, {});
+
+  this._toReverb = context.createGain();
+  this._lowpass = context.createBiquadFilter();
+  this._lowpass.type = "lowpass";
+  this._lowpass.frequency.value = 20000;
+  this._lowpass.Q.value = 0;
+
+  this.input.connect(this._attenuation.input);
+
+  this._attenuation.output.connect(this._toReverb);
+  this._toReverb.connect(this.simpleReverb.input);
+  this.simpleReverb.output.connect(this._encoder.input);
+
+  this._attenuation.output.connect(this._lowpass);
+  this._lowpass.connect(this._encoder.input);
   this._encoder.output.connect(scene._listener.input);
 
   // Assign initial conditions.
@@ -2364,8 +2385,8 @@ Source.prototype._update = function () {
     ) * Utils.RADIANS_TO_DEGREES;
 
   // Set distance/directivity/direction values.
-  this._attenuation.setDistance(distance);
-  this._directivity.computeAngle(this._forward, this._dx);
+  // this._attenuation.setDistance(distance);
+  // this._directivity.computeAngle(this._forward, this._dx);
   this._encoder.setDirection(azimuth, elevation);
 };
 
@@ -2482,6 +2503,10 @@ Source.prototype.setSourceWidth = function (sourceWidth) {
 Source.prototype.setDirectivityPattern = function (alpha, sharpness) {
   this._directivity.setPattern(alpha, sharpness);
   this.setPosition(this._position[0], this._position[1], this._position[2]);
+};
+
+Source.prototype.setCutoffFrequency = function (freq) {
+  this._lowpass.frequency.value = freq;
 };
 
 /**
@@ -2618,9 +2643,7 @@ Directivity.prototype.computeAngle = function (forward, direction) {
     coeff = 1 - this._alpha + this._alpha * cosTheta;
     coeff = Math.pow(Math.abs(coeff), this._sharpness);
   }
-  console.log("in compute angle", forwardNorm, directionNorm);
   this._lowpass.frequency.value = this._context.sampleRate * 0.5 * coeff;
-  console.log("in compute angle freq", this._lowpass.frequency.value);
 };
 
 /**
@@ -2673,10 +2696,8 @@ module.exports = Directivity;
 
 
 
-
 // Internal dependencies.
 const Utils = __webpack_require__(0);
-
 
 /**
  * @class Attenuation
@@ -2755,14 +2776,13 @@ function Attenuation(context, options) {
   this.output = this._gainNode;
 }
 
-
 /**
  * Set distance from the listener.
  * @param {Number} distance Distance (in meters).
  */
-Attenuation.prototype.setDistance = function(distance) {
+Attenuation.prototype.setDistance = function (distance) {
   let gain = 1;
-  if (this._rolloff == 'logarithmic') {
+  if (this._rolloff == "logarithmic") {
     if (distance > this.maxDistance) {
       gain = 0;
     } else if (distance > this.minDistance) {
@@ -2776,7 +2796,7 @@ Attenuation.prototype.setDistance = function(distance) {
         gain = (attenuation - attenuationMax) / (1 - attenuationMax);
       }
     }
-  } else if (this._rolloff == 'linear') {
+  } else if (this._rolloff == "linear") {
     if (distance > this.maxDistance) {
       gain = 0;
     } else if (distance > this.minDistance) {
@@ -2789,19 +2809,23 @@ Attenuation.prototype.setDistance = function(distance) {
   this._gainNode.gain.value = gain;
 };
 
-
 /**
  * Set rolloff.
  * @param {string} rolloff
  * Rolloff model to use, chosen from options in
  * {@linkcode Utils.ATTENUATION_ROLLOFFS ATTENUATION_ROLLOFFS}.
  */
-Attenuation.prototype.setRolloff = function(rolloff) {
+Attenuation.prototype.setRolloff = function (rolloff) {
   let isValidModel = ~Utils.ATTENUATION_ROLLOFFS.indexOf(rolloff);
   if (rolloff == undefined || !isValidModel) {
     if (!isValidModel) {
-      Utils.log('Invalid rolloff model (\"' + rolloff +
-        '\"). Using default: \"' + Utils.DEFAULT_ATTENUATION_ROLLOFF + '\".');
+      Utils.log(
+        'Invalid rolloff model ("' +
+          rolloff +
+          '"). Using default: "' +
+          Utils.DEFAULT_ATTENUATION_ROLLOFF +
+          '".'
+      );
     }
     rolloff = Utils.DEFAULT_ATTENUATION_ROLLOFF;
   } else {
@@ -2810,12 +2834,63 @@ Attenuation.prototype.setRolloff = function(rolloff) {
   this._rolloff = rolloff;
 };
 
+Attenuation.prototype.setManualGain = function (gain) {
+  this._gainNode.gain.value = gain;
+};
 
 module.exports = Attenuation;
 
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const Utils = __webpack_require__(0);
+
+function SimpleReverb(context, options) {
+  if (options === undefined) {
+    options = {};
+  }
+  if (options.reverbFreqCutoff === undefined) {
+    options.reverbFreqCutoff = Utils.DEFAULT_REFLECTION_CUTOFF_FREQUENCY;
+  }
+
+  this.input = context.createGain();
+  this.output = context.createGain();
+  this._lowpass = context.createBiquadFilter();
+  this.delay = context.createDelay(Utils.DEFAULT_REVERB_MAX_DURATION);
+  this.gain = context.createGain();
+
+  this._lowpass.type = "lowpass";
+  this._lowpass.frequency.value = Utils.DEFAULT_REFLECTION_CUTOFF_FREQUENCY;
+  this._lowpass.Q.value = 0;
+
+  this.input.connect(this._lowpass);
+  this._lowpass.connect(this.delay);
+  this.delay.connect(this.gain);
+  this.gain.connect(this.output);
+}
+
+SimpleReverb.prototype.setDelay = function (delaySecs) {
+  this.delay.delayTime.value = delaySecs;
+};
+
+SimpleReverb.prototype.setGain = function (gain) {
+  this.gain.gain.value = gain;
+};
+
+SimpleReverb.prototype.setFreq = function (freq) {
+  this._lowpass.frequency.value = freq;
+};
+
+module.exports = SimpleReverb;
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2842,12 +2917,11 @@ module.exports = Attenuation;
 
 
 
-
 // Internal dependencies.
-const LateReflections = __webpack_require__(8);
-const EarlyReflections = __webpack_require__(9);
+const LateReflections = __webpack_require__(9);
+const EarlyReflections = __webpack_require__(10);
+const SimpleReverb = __webpack_require__(7);
 const Utils = __webpack_require__(0);
-
 
 /**
  * Generate absorption coefficients from material names.
@@ -2859,8 +2933,10 @@ function _getCoefficientsFromMaterials(materials) {
   let coefficients = {};
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
     if (Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property)) {
-      coefficients[property] = Utils.ROOM_MATERIAL_COEFFICIENTS[
-        Utils.DEFAULT_ROOM_MATERIALS[property]];
+      coefficients[property] =
+        Utils.ROOM_MATERIAL_COEFFICIENTS[
+          Utils.DEFAULT_ROOM_MATERIALS[property]
+        ];
     }
   }
 
@@ -2872,18 +2948,26 @@ function _getCoefficientsFromMaterials(materials) {
 
   // Assign coefficients using provided materials.
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
-    if (Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property) &&
-        materials.hasOwnProperty(property)) {
+    if (
+      Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property) &&
+      materials.hasOwnProperty(property)
+    ) {
       if (materials[property] in Utils.ROOM_MATERIAL_COEFFICIENTS) {
         coefficients[property] =
           Utils.ROOM_MATERIAL_COEFFICIENTS[materials[property]];
       } else {
-        Utils.log('Material \"' + materials[property] + '\" on wall \"' +
-          property + '\" not found. Using \"' +
-          Utils.DEFAULT_ROOM_MATERIALS[property] + '\".');
+        Utils.log(
+          'Material "' +
+            materials[property] +
+            '" on wall "' +
+            property +
+            '" not found. Using "' +
+            Utils.DEFAULT_ROOM_MATERIALS[property] +
+            '".'
+        );
       }
     } else {
-      Utils.log('Wall \"' + property + '\" is not defined. Default used.');
+      Utils.log('Wall "' + property + '" is not defined. Default used.');
     }
   }
   return coefficients;
@@ -2899,10 +2983,12 @@ function _sanitizeCoefficients(coefficients) {
     coefficients = {};
   }
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
-    if (!(coefficients.hasOwnProperty(property))) {
+    if (!coefficients.hasOwnProperty(property)) {
       // If element is not present, use default coefficients.
-      coefficients[property] = Utils.ROOM_MATERIAL_COEFFICIENTS[
-        Utils.DEFAULT_ROOM_MATERIALS[property]];
+      coefficients[property] =
+        Utils.ROOM_MATERIAL_COEFFICIENTS[
+          Utils.DEFAULT_ROOM_MATERIALS[property]
+        ];
     }
   }
   return coefficients;
@@ -2918,7 +3004,7 @@ function _sanitizeDimensions(dimensions) {
     dimensions = {};
   }
   for (let property in Utils.DEFAULT_ROOM_DIMENSIONS) {
-    if (!(dimensions.hasOwnProperty(property))) {
+    if (!dimensions.hasOwnProperty(property)) {
       dimensions[property] = Utils.DEFAULT_ROOM_DIMENSIONS[property];
     }
   }
@@ -2969,13 +3055,13 @@ function _getDurationsFromProperties(dimensions, coefficients, speedOfSound) {
     //     application to concert hall audience and chair absorption." The
     //     Journal of the Acoustical Society of America, Vol. 120, No. 3.
     //     (2006), pp. 1399-1399.
-    durations[i] = Utils.ROOM_EYRING_CORRECTION_COEFFICIENT * k * volume /
-      (-totalArea * Math.log(1 - meanAbsorbtionArea) + 4 *
-      Utils.ROOM_AIR_ABSORPTION_COEFFICIENTS[i] * volume);
+    durations[i] =
+      (Utils.ROOM_EYRING_CORRECTION_COEFFICIENT * k * volume) /
+      (-totalArea * Math.log(1 - meanAbsorbtionArea) +
+        4 * Utils.ROOM_AIR_ABSORPTION_COEFFICIENTS[i] * volume);
   }
   return durations;
 }
-
 
 /**
  * Compute reflection coefficients from absorption coefficients.
@@ -2985,8 +3071,7 @@ function _getDurationsFromProperties(dimensions, coefficients, speedOfSound) {
 function _computeReflectionCoefficients(absorptionCoefficients) {
   let reflectionCoefficients = [];
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       // Compute average absorption coefficient (per wall).
       reflectionCoefficients[property] = 0;
       for (let j = 0; j < Utils.NUMBER_REFLECTION_AVERAGING_BANDS; j++) {
@@ -2998,13 +3083,13 @@ function _computeReflectionCoefficients(absorptionCoefficients) {
         Utils.NUMBER_REFLECTION_AVERAGING_BANDS;
 
       // Convert absorption coefficient to reflection coefficient.
-      reflectionCoefficients[property] =
-        Math.sqrt(1 - reflectionCoefficients[property]);
+      reflectionCoefficients[property] = Math.sqrt(
+        1 - reflectionCoefficients[property]
+      );
     }
   }
   return reflectionCoefficients;
 }
-
 
 /**
  * @class Room
@@ -3069,10 +3154,14 @@ function Room(context, options) {
   // Sanitize room-properties-related arguments.
   options.dimensions = _sanitizeDimensions(options.dimensions);
   let absorptionCoefficients = _getCoefficientsFromMaterials(options.materials);
-  let reflectionCoefficients =
-    _computeReflectionCoefficients(absorptionCoefficients);
-  let durations = _getDurationsFromProperties(options.dimensions,
-    absorptionCoefficients, options.speedOfSound);
+  let reflectionCoefficients = _computeReflectionCoefficients(
+    absorptionCoefficients
+  );
+  let durations = _getDurationsFromProperties(
+    options.dimensions,
+    absorptionCoefficients,
+    options.speedOfSound
+  );
 
   // Construct submodules for early and late reflections.
   this.early = new EarlyReflections(context, {
@@ -3083,19 +3172,24 @@ function Room(context, options) {
   });
   this.late = new LateReflections(context, {
     durations: durations,
+    gain: 0,
   });
+  // this.simpleReverb = new SimpleReverb(context, {});
 
   this.speedOfSound = options.speedOfSound;
 
-  // Construct auxillary audio nodes.
   this.output = context.createGain();
+  /*
+  // Construct auxillary audio nodes.
   this.early.output.connect(this.output);
   this._merger = context.createChannelMerger(4);
 
   this.late.output.connect(this._merger, 0, 0);
   this._merger.connect(this.output);
-}
+  */
 
+  // this.simpleReverb.output.connect(this.output);
+}
 
 /**
  * Set the room's dimensions and wall materials.
@@ -3104,20 +3198,23 @@ function Room(context, options) {
  * @param {Utils~RoomMaterials} materials Named acoustic materials per wall. Defaults to
  * {@linkcode Utils.DEFAULT_ROOM_MATERIALS DEFAULT_ROOM_MATERIALS}.
  */
-Room.prototype.setProperties = function(dimensions, materials) {
+Room.prototype.setProperties = function (dimensions, materials) {
   // Compute late response.
   let absorptionCoefficients = _getCoefficientsFromMaterials(materials);
-  let durations = _getDurationsFromProperties(dimensions,
-    absorptionCoefficients, this.speedOfSound);
+  let durations = _getDurationsFromProperties(
+    dimensions,
+    absorptionCoefficients,
+    this.speedOfSound
+  );
   this.late.setDurations(durations);
 
   // Compute early response.
   this.early.speedOfSound = this.speedOfSound;
-  let reflectionCoefficients =
-    _computeReflectionCoefficients(absorptionCoefficients);
+  let reflectionCoefficients = _computeReflectionCoefficients(
+    absorptionCoefficients
+  );
   this.early.setRoomProperties(dimensions, reflectionCoefficients);
 };
-
 
 /**
  * Set the listener's position (in meters), where origin is the center of
@@ -3126,7 +3223,7 @@ Room.prototype.setProperties = function(dimensions, materials) {
  * @param {Number} y
  * @param {Number} z
  */
-Room.prototype.setListenerPosition = function(x, y, z) {
+Room.prototype.setListenerPosition = function (x, y, z) {
   this.early.speedOfSound = this.speedOfSound;
   this.early.setListenerPosition(x, y, z);
 
@@ -3142,7 +3239,6 @@ Room.prototype.setListenerPosition = function(x, y, z) {
   this.output.gain.value = gain;
 };
 
-
 /**
  * Compute distance outside room of provided position (in meters).
  * @param {Number} x
@@ -3151,22 +3247,30 @@ Room.prototype.setListenerPosition = function(x, y, z) {
  * @return {Number}
  * Distance outside room (in meters). Returns 0 if inside room.
  */
-Room.prototype.getDistanceOutsideRoom = function(x, y, z) {
-  let dx = Math.max(0, -this.early._halfDimensions.width - x,
-    x - this.early._halfDimensions.width);
-    let dy = Math.max(0, -this.early._halfDimensions.height - y,
-    y - this.early._halfDimensions.height);
-    let dz = Math.max(0, -this.early._halfDimensions.depth - z,
-    z - this.early._halfDimensions.depth);
+Room.prototype.getDistanceOutsideRoom = function (x, y, z) {
+  let dx = Math.max(
+    0,
+    -this.early._halfDimensions.width - x,
+    x - this.early._halfDimensions.width
+  );
+  let dy = Math.max(
+    0,
+    -this.early._halfDimensions.height - y,
+    y - this.early._halfDimensions.height
+  );
+  let dz = Math.max(
+    0,
+    -this.early._halfDimensions.depth - z,
+    z - this.early._halfDimensions.depth
+  );
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
-
 
 module.exports = Room;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3389,7 +3493,7 @@ module.exports = LateReflections;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3418,7 +3522,6 @@ module.exports = LateReflections;
 
 // Internal dependencies.
 const Utils = __webpack_require__(0);
-
 
 /**
  * @class EarlyReflections
@@ -3478,9 +3581,13 @@ function EarlyReflections(context, options) {
     options.coefficients = {};
     Object.assign(options.coefficients, Utils.DEFAULT_REFLECTION_COEFFICIENTS);
   }
+  if (options.delayMultiplier == undefined) {
+    options.delayMultiplier = 1;
+  }
 
   // Assign room's speed of sound.
   this.speedOfSound = options.speedOfSound;
+  this.delayMultiplier = options.delayMultiplier;
 
   // Create nodes.
   this.input = context.createGain();
@@ -3493,10 +3600,8 @@ function EarlyReflections(context, options) {
 
   // Connect audio graph for each wall reflection.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
-      this._delays[property] =
-        context.createDelay(Utils.MAX_DURATION);
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
+      this._delays[property] = context.createDelay(Utils.MAX_DURATION);
       this._gains[property] = context.createGain();
     }
   }
@@ -3505,14 +3610,13 @@ function EarlyReflections(context, options) {
   this._inverters.back = context.createGain();
 
   // Initialize lowpass filter.
-  this._lowpass.type = 'lowpass';
+  this._lowpass.type = "lowpass";
   this._lowpass.frequency.value = Utils.DEFAULT_REFLECTION_CUTOFF_FREQUENCY;
   this._lowpass.Q.value = 0;
 
   // Initialize encoder directions, set delay times and gains to 0.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       this._delays[property].delayTime.value = 0;
       this._gains[property].gain.value = 0;
     }
@@ -3526,8 +3630,7 @@ function EarlyReflections(context, options) {
   // Connect nodes.
   this.input.connect(this._lowpass);
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       this._lowpass.connect(this._delays[property]);
       this._delays[property].connect(this._gains[property]);
       this._gains[property].connect(this._merger, 0, 0);
@@ -3562,7 +3665,6 @@ function EarlyReflections(context, options) {
   this.setRoomProperties(options.dimensions, options.coefficients);
 }
 
-
 /**
  * Set the listener's position (in meters),
  * where [0,0,0] is the center of the room.
@@ -3570,32 +3672,44 @@ function EarlyReflections(context, options) {
  * @param {Number} y
  * @param {Number} z
  */
-EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
+EarlyReflections.prototype.setListenerPosition = function (x, y, z) {
   // Assign listener position.
   this._listenerPosition = [x, y, z];
 
   // Determine distances to each wall.
   let distances = {
-    left: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.width + x) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    right: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.width - x) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    front: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.depth + z) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    back: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.depth - z) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    down: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.height + y) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
-    up: Utils.DEFAULT_REFLECTION_MULTIPLIER * Math.max(0,
-      this._halfDimensions.height - y) + Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    left:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.width + x) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    right:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.width - x) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    front:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.depth + z) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    back:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.depth - z) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    down:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.height + y) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
+    up:
+      Utils.DEFAULT_REFLECTION_MULTIPLIER *
+        Math.max(0, this._halfDimensions.height - y) +
+      Utils.DEFAULT_REFLECTION_MIN_DISTANCE,
   };
 
   // Assign delay & attenuation values using distances.
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       // Compute and assign delay (in seconds).
-      let delayInSecs = distances[property] / this.speedOfSound;
+      let delayInSecs =
+        distances[property] / (this.speedOfSound * this.delayMultiplier);
       this._delays[property].delayTime.value = delayInSecs;
 
       // Compute and assign gain, uses logarithmic rolloff: "g = R / (d + 1)"
@@ -3604,7 +3718,6 @@ EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
     }
   }
 };
-
 
 /**
  * Set the room's properties which determines the characteristics of
@@ -3617,8 +3730,10 @@ EarlyReflections.prototype.setListenerPosition = function(x, y, z) {
  * {@linkcode Utils.DEFAULT_REFLECTION_COEFFICIENTS
  * DEFAULT_REFLECTION_COEFFICIENTS}.
  */
-EarlyReflections.prototype.setRoomProperties = function(dimensions,
-                                                        coefficients) {
+EarlyReflections.prototype.setRoomProperties = function (
+  dimensions,
+  coefficients
+) {
   if (dimensions == undefined) {
     dimensions = {};
     Object.assign(dimensions, Utils.DEFAULT_ROOM_DIMENSIONS);
@@ -3636,16 +3751,34 @@ EarlyReflections.prototype.setRoomProperties = function(dimensions,
   this._halfDimensions.depth = dimensions.depth * 0.5;
 
   // Update listener position with new room properties.
-  this.setListenerPosition(this._listenerPosition[0],
-    this._listenerPosition[1], this._listenerPosition[2]);
+  this.setListenerPosition(
+    this._listenerPosition[0],
+    this._listenerPosition[1],
+    this._listenerPosition[2]
+  );
 };
 
+/**
+ * Sets the multiplier that changes the delay of reflection
+ * @param {Number} multiplier
+ */
+EarlyReflections.prototype.setDelayMultiplier = function (multiplier) {
+  console.log("in delay multiplier");
+  this.delayMultiplier = multiplier;
+
+  // Update listener position with new delay.
+  this.setListenerPosition(
+    this._listenerPosition[0],
+    this._listenerPosition[1],
+    this._listenerPosition[2]
+  );
+};
 
 module.exports = EarlyReflections;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3674,25 +3807,25 @@ module.exports = EarlyReflections;
 
 
 // Main module.
-exports.ResonanceAudio = __webpack_require__(11);
+exports.ResonanceAudio = __webpack_require__(12);
 
 
 // Testable Submodules.
 exports.ResonanceAudio.Attenuation = __webpack_require__(6);
 exports.ResonanceAudio.Directivity = __webpack_require__(5);
-exports.ResonanceAudio.EarlyReflections = __webpack_require__(9);
+exports.ResonanceAudio.EarlyReflections = __webpack_require__(10);
 exports.ResonanceAudio.Encoder = __webpack_require__(1);
-exports.ResonanceAudio.LateReflections = __webpack_require__(8);
+exports.ResonanceAudio.LateReflections = __webpack_require__(9);
 exports.ResonanceAudio.Listener = __webpack_require__(2);
-exports.ResonanceAudio.Room = __webpack_require__(7);
+exports.ResonanceAudio.Room = __webpack_require__(8);
 exports.ResonanceAudio.Source = __webpack_require__(4);
 exports.ResonanceAudio.Tables = __webpack_require__(3);
 exports.ResonanceAudio.Utils = __webpack_require__(0);
-exports.ResonanceAudio.Version = __webpack_require__(13);
+exports.ResonanceAudio.Version = __webpack_require__(14);
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3723,7 +3856,7 @@ exports.ResonanceAudio.Version = __webpack_require__(13);
 // Internal dependencies.
 const Listener = __webpack_require__(2);
 const Source = __webpack_require__(4);
-const Room = __webpack_require__(7);
+const Room = __webpack_require__(8);
 const Encoder = __webpack_require__(1);
 const Utils = __webpack_require__(0);
 
@@ -3942,7 +4075,7 @@ module.exports = ResonanceAudio;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3967,7 +4100,7 @@ const A={};let t,e,i,n,o,r,s,a,h,f,g,c,D,w,v,P,B,u,l,Q,_,C,d,E,M,p,I,x,m;A.log=f
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

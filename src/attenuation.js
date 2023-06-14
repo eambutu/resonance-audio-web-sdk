@@ -19,12 +19,10 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
-
+"use strict";
 
 // Internal dependencies.
-const Utils = require('./utils.js');
-
+const Utils = require("./utils.js");
 
 /**
  * @class Attenuation
@@ -103,14 +101,13 @@ function Attenuation(context, options) {
   this.output = this._gainNode;
 }
 
-
 /**
  * Set distance from the listener.
  * @param {Number} distance Distance (in meters).
  */
-Attenuation.prototype.setDistance = function(distance) {
+Attenuation.prototype.setDistance = function (distance) {
   let gain = 1;
-  if (this._rolloff == 'logarithmic') {
+  if (this._rolloff == "logarithmic") {
     if (distance > this.maxDistance) {
       gain = 0;
     } else if (distance > this.minDistance) {
@@ -124,7 +121,7 @@ Attenuation.prototype.setDistance = function(distance) {
         gain = (attenuation - attenuationMax) / (1 - attenuationMax);
       }
     }
-  } else if (this._rolloff == 'linear') {
+  } else if (this._rolloff == "linear") {
     if (distance > this.maxDistance) {
       gain = 0;
     } else if (distance > this.minDistance) {
@@ -137,19 +134,23 @@ Attenuation.prototype.setDistance = function(distance) {
   this._gainNode.gain.value = gain;
 };
 
-
 /**
  * Set rolloff.
  * @param {string} rolloff
  * Rolloff model to use, chosen from options in
  * {@linkcode Utils.ATTENUATION_ROLLOFFS ATTENUATION_ROLLOFFS}.
  */
-Attenuation.prototype.setRolloff = function(rolloff) {
+Attenuation.prototype.setRolloff = function (rolloff) {
   let isValidModel = ~Utils.ATTENUATION_ROLLOFFS.indexOf(rolloff);
   if (rolloff == undefined || !isValidModel) {
     if (!isValidModel) {
-      Utils.log('Invalid rolloff model (\"' + rolloff +
-        '\"). Using default: \"' + Utils.DEFAULT_ATTENUATION_ROLLOFF + '\".');
+      Utils.log(
+        'Invalid rolloff model ("' +
+          rolloff +
+          '"). Using default: "' +
+          Utils.DEFAULT_ATTENUATION_ROLLOFF +
+          '".'
+      );
     }
     rolloff = Utils.DEFAULT_ATTENUATION_ROLLOFF;
   } else {
@@ -158,5 +159,8 @@ Attenuation.prototype.setRolloff = function(rolloff) {
   this._rolloff = rolloff;
 };
 
+Attenuation.prototype.setManualGain = function (gain) {
+  this._gainNode.gain.value = gain;
+};
 
 module.exports = Attenuation;

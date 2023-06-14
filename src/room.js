@@ -19,14 +19,13 @@
  * @author Andrew Allen <bitllama@google.com>
  */
 
-'use strict';
-
+"use strict";
 
 // Internal dependencies.
-const LateReflections = require('./late-reflections.js');
-const EarlyReflections = require('./early-reflections.js');
-const Utils = require('./utils.js');
-
+const LateReflections = require("./late-reflections.js");
+const EarlyReflections = require("./early-reflections.js");
+const SimpleReverb = require("./simple-reverb.js");
+const Utils = require("./utils.js");
 
 /**
  * Generate absorption coefficients from material names.
@@ -38,8 +37,10 @@ function _getCoefficientsFromMaterials(materials) {
   let coefficients = {};
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
     if (Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property)) {
-      coefficients[property] = Utils.ROOM_MATERIAL_COEFFICIENTS[
-        Utils.DEFAULT_ROOM_MATERIALS[property]];
+      coefficients[property] =
+        Utils.ROOM_MATERIAL_COEFFICIENTS[
+          Utils.DEFAULT_ROOM_MATERIALS[property]
+        ];
     }
   }
 
@@ -51,18 +52,26 @@ function _getCoefficientsFromMaterials(materials) {
 
   // Assign coefficients using provided materials.
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
-    if (Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property) &&
-        materials.hasOwnProperty(property)) {
+    if (
+      Utils.DEFAULT_ROOM_MATERIALS.hasOwnProperty(property) &&
+      materials.hasOwnProperty(property)
+    ) {
       if (materials[property] in Utils.ROOM_MATERIAL_COEFFICIENTS) {
         coefficients[property] =
           Utils.ROOM_MATERIAL_COEFFICIENTS[materials[property]];
       } else {
-        Utils.log('Material \"' + materials[property] + '\" on wall \"' +
-          property + '\" not found. Using \"' +
-          Utils.DEFAULT_ROOM_MATERIALS[property] + '\".');
+        Utils.log(
+          'Material "' +
+            materials[property] +
+            '" on wall "' +
+            property +
+            '" not found. Using "' +
+            Utils.DEFAULT_ROOM_MATERIALS[property] +
+            '".'
+        );
       }
     } else {
-      Utils.log('Wall \"' + property + '\" is not defined. Default used.');
+      Utils.log('Wall "' + property + '" is not defined. Default used.');
     }
   }
   return coefficients;
@@ -78,10 +87,12 @@ function _sanitizeCoefficients(coefficients) {
     coefficients = {};
   }
   for (let property in Utils.DEFAULT_ROOM_MATERIALS) {
-    if (!(coefficients.hasOwnProperty(property))) {
+    if (!coefficients.hasOwnProperty(property)) {
       // If element is not present, use default coefficients.
-      coefficients[property] = Utils.ROOM_MATERIAL_COEFFICIENTS[
-        Utils.DEFAULT_ROOM_MATERIALS[property]];
+      coefficients[property] =
+        Utils.ROOM_MATERIAL_COEFFICIENTS[
+          Utils.DEFAULT_ROOM_MATERIALS[property]
+        ];
     }
   }
   return coefficients;
@@ -97,7 +108,7 @@ function _sanitizeDimensions(dimensions) {
     dimensions = {};
   }
   for (let property in Utils.DEFAULT_ROOM_DIMENSIONS) {
-    if (!(dimensions.hasOwnProperty(property))) {
+    if (!dimensions.hasOwnProperty(property)) {
       dimensions[property] = Utils.DEFAULT_ROOM_DIMENSIONS[property];
     }
   }
@@ -148,13 +159,13 @@ function _getDurationsFromProperties(dimensions, coefficients, speedOfSound) {
     //     application to concert hall audience and chair absorption." The
     //     Journal of the Acoustical Society of America, Vol. 120, No. 3.
     //     (2006), pp. 1399-1399.
-    durations[i] = Utils.ROOM_EYRING_CORRECTION_COEFFICIENT * k * volume /
-      (-totalArea * Math.log(1 - meanAbsorbtionArea) + 4 *
-      Utils.ROOM_AIR_ABSORPTION_COEFFICIENTS[i] * volume);
+    durations[i] =
+      (Utils.ROOM_EYRING_CORRECTION_COEFFICIENT * k * volume) /
+      (-totalArea * Math.log(1 - meanAbsorbtionArea) +
+        4 * Utils.ROOM_AIR_ABSORPTION_COEFFICIENTS[i] * volume);
   }
   return durations;
 }
-
 
 /**
  * Compute reflection coefficients from absorption coefficients.
@@ -164,8 +175,7 @@ function _getDurationsFromProperties(dimensions, coefficients, speedOfSound) {
 function _computeReflectionCoefficients(absorptionCoefficients) {
   let reflectionCoefficients = [];
   for (let property in Utils.DEFAULT_REFLECTION_COEFFICIENTS) {
-    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS
-        .hasOwnProperty(property)) {
+    if (Utils.DEFAULT_REFLECTION_COEFFICIENTS.hasOwnProperty(property)) {
       // Compute average absorption coefficient (per wall).
       reflectionCoefficients[property] = 0;
       for (let j = 0; j < Utils.NUMBER_REFLECTION_AVERAGING_BANDS; j++) {
@@ -177,13 +187,13 @@ function _computeReflectionCoefficients(absorptionCoefficients) {
         Utils.NUMBER_REFLECTION_AVERAGING_BANDS;
 
       // Convert absorption coefficient to reflection coefficient.
-      reflectionCoefficients[property] =
-        Math.sqrt(1 - reflectionCoefficients[property]);
+      reflectionCoefficients[property] = Math.sqrt(
+        1 - reflectionCoefficients[property]
+      );
     }
   }
   return reflectionCoefficients;
 }
-
 
 /**
  * @class Room
@@ -248,10 +258,14 @@ function Room(context, options) {
   // Sanitize room-properties-related arguments.
   options.dimensions = _sanitizeDimensions(options.dimensions);
   let absorptionCoefficients = _getCoefficientsFromMaterials(options.materials);
-  let reflectionCoefficients =
-    _computeReflectionCoefficients(absorptionCoefficients);
-  let durations = _getDurationsFromProperties(options.dimensions,
-    absorptionCoefficients, options.speedOfSound);
+  let reflectionCoefficients = _computeReflectionCoefficients(
+    absorptionCoefficients
+  );
+  let durations = _getDurationsFromProperties(
+    options.dimensions,
+    absorptionCoefficients,
+    options.speedOfSound
+  );
 
   // Construct submodules for early and late reflections.
   this.early = new EarlyReflections(context, {
@@ -262,19 +276,24 @@ function Room(context, options) {
   });
   this.late = new LateReflections(context, {
     durations: durations,
+    gain: 0,
   });
+  // this.simpleReverb = new SimpleReverb(context, {});
 
   this.speedOfSound = options.speedOfSound;
 
-  // Construct auxillary audio nodes.
   this.output = context.createGain();
+  /*
+  // Construct auxillary audio nodes.
   this.early.output.connect(this.output);
   this._merger = context.createChannelMerger(4);
 
   this.late.output.connect(this._merger, 0, 0);
   this._merger.connect(this.output);
-}
+  */
 
+  // this.simpleReverb.output.connect(this.output);
+}
 
 /**
  * Set the room's dimensions and wall materials.
@@ -283,20 +302,23 @@ function Room(context, options) {
  * @param {Utils~RoomMaterials} materials Named acoustic materials per wall. Defaults to
  * {@linkcode Utils.DEFAULT_ROOM_MATERIALS DEFAULT_ROOM_MATERIALS}.
  */
-Room.prototype.setProperties = function(dimensions, materials) {
+Room.prototype.setProperties = function (dimensions, materials) {
   // Compute late response.
   let absorptionCoefficients = _getCoefficientsFromMaterials(materials);
-  let durations = _getDurationsFromProperties(dimensions,
-    absorptionCoefficients, this.speedOfSound);
+  let durations = _getDurationsFromProperties(
+    dimensions,
+    absorptionCoefficients,
+    this.speedOfSound
+  );
   this.late.setDurations(durations);
 
   // Compute early response.
   this.early.speedOfSound = this.speedOfSound;
-  let reflectionCoefficients =
-    _computeReflectionCoefficients(absorptionCoefficients);
+  let reflectionCoefficients = _computeReflectionCoefficients(
+    absorptionCoefficients
+  );
   this.early.setRoomProperties(dimensions, reflectionCoefficients);
 };
-
 
 /**
  * Set the listener's position (in meters), where origin is the center of
@@ -305,7 +327,7 @@ Room.prototype.setProperties = function(dimensions, materials) {
  * @param {Number} y
  * @param {Number} z
  */
-Room.prototype.setListenerPosition = function(x, y, z) {
+Room.prototype.setListenerPosition = function (x, y, z) {
   this.early.speedOfSound = this.speedOfSound;
   this.early.setListenerPosition(x, y, z);
 
@@ -321,7 +343,6 @@ Room.prototype.setListenerPosition = function(x, y, z) {
   this.output.gain.value = gain;
 };
 
-
 /**
  * Compute distance outside room of provided position (in meters).
  * @param {Number} x
@@ -330,15 +351,23 @@ Room.prototype.setListenerPosition = function(x, y, z) {
  * @return {Number}
  * Distance outside room (in meters). Returns 0 if inside room.
  */
-Room.prototype.getDistanceOutsideRoom = function(x, y, z) {
-  let dx = Math.max(0, -this.early._halfDimensions.width - x,
-    x - this.early._halfDimensions.width);
-    let dy = Math.max(0, -this.early._halfDimensions.height - y,
-    y - this.early._halfDimensions.height);
-    let dz = Math.max(0, -this.early._halfDimensions.depth - z,
-    z - this.early._halfDimensions.depth);
+Room.prototype.getDistanceOutsideRoom = function (x, y, z) {
+  let dx = Math.max(
+    0,
+    -this.early._halfDimensions.width - x,
+    x - this.early._halfDimensions.width
+  );
+  let dy = Math.max(
+    0,
+    -this.early._halfDimensions.height - y,
+    y - this.early._halfDimensions.height
+  );
+  let dz = Math.max(
+    0,
+    -this.early._halfDimensions.depth - z,
+    z - this.early._halfDimensions.depth
+  );
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
-
 
 module.exports = Room;

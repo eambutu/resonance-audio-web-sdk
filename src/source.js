@@ -26,6 +26,7 @@ const Directivity = require("./directivity.js");
 const Attenuation = require("./attenuation.js");
 const Encoder = require("./encoder.js");
 const Utils = require("./utils.js");
+const SimpleReverb = require("./simple-reverb.js");
 
 /**
  * Options for constructing a new Source.
@@ -103,7 +104,7 @@ function Source(scene, options) {
     options.maxDistance = Utils.DEFAULT_MAX_DISTANCE;
   }
   if (options.rolloff == undefined) {
-    options.rolloff = Utils.DEFAULT_ATTENTUATION_ROLLOFF;
+    options.rolloff = Utils.DEFAULT_ATTENUATION_ROLLOFF;
   }
   if (options.gain == undefined) {
     options.gain = Utils.DEFAULT_SOURCE_GAIN;
@@ -146,6 +147,7 @@ function Source(scene, options) {
   });
 
   // Connect nodes.
+  /*
   this.input.connect(this._toLate);
   this._toLate.connect(scene._room.late.input);
 
@@ -156,6 +158,25 @@ function Source(scene, options) {
   this._attenuation.output.connect(this._directivity.input);
   this._directivity.output.connect(this._encoder.input);
 
+  this._encoder.output.connect(scene._listener.input);
+  */
+
+  this.simpleReverb = new SimpleReverb(context, {});
+
+  this._toReverb = context.createGain();
+  this._lowpass = context.createBiquadFilter();
+  this._lowpass.type = "lowpass";
+  this._lowpass.frequency.value = 20000;
+  this._lowpass.Q.value = 0;
+
+  this.input.connect(this._attenuation.input);
+
+  this._attenuation.output.connect(this._toReverb);
+  this._toReverb.connect(this.simpleReverb.input);
+  this.simpleReverb.output.connect(this._encoder.input);
+
+  this._attenuation.output.connect(this._lowpass);
+  this._lowpass.connect(this._encoder.input);
   this._encoder.output.connect(scene._listener.input);
 
   // Assign initial conditions.
@@ -221,8 +242,8 @@ Source.prototype._update = function () {
     ) * Utils.RADIANS_TO_DEGREES;
 
   // Set distance/directivity/direction values.
-  this._attenuation.setDistance(distance);
-  this._directivity.computeAngle(this._forward, this._dx);
+  // this._attenuation.setDistance(distance);
+  // this._directivity.computeAngle(this._forward, this._dx);
   this._encoder.setDirection(azimuth, elevation);
 };
 
@@ -339,6 +360,10 @@ Source.prototype.setSourceWidth = function (sourceWidth) {
 Source.prototype.setDirectivityPattern = function (alpha, sharpness) {
   this._directivity.setPattern(alpha, sharpness);
   this.setPosition(this._position[0], this._position[1], this._position[2]);
+};
+
+Source.prototype.setCutoffFrequency = function (freq) {
+  this._lowpass.frequency.value = freq;
 };
 
 /**
