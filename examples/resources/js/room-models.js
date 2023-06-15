@@ -68,7 +68,7 @@ let normalAudioElements = [];
 let normalSourceIds = ["sourceDButton", "sourceEButton", "sourceFButton"];
 let normalDirectivity = [];
 
-let heightMultiplier = 10;
+let heightMultiplier = 4;
 
 /**
  * @private
@@ -251,14 +251,13 @@ let onLoad = function () {
       setGeneralFreq(freq);
     });
 
-  /*
   document
     .getElementById("heightMultiplier")
     .addEventListener("input", (event) => {
       heightMultiplier = parseFloat(event.target.value);
       updatePositions(canvasControl._elements);
+      updateStats();
     });
-  */
 
   document
     .getElementById("roomDimensionsSelect")
@@ -359,6 +358,7 @@ const updateStats = () => {
   const reverbGain = document.getElementById("reverbGain").value;
   const reverbFreq = document.getElementById("reverbFreqCutoff").value;
   const generalFreq = document.getElementById("generalFreqCutoff").value;
+  const heightMultiplier = document.getElementById("heightMultiplier").value;
   document.getElementById("stats").innerText =
     "Gain: " +
     gain +
@@ -370,7 +370,8 @@ const updateStats = () => {
     reverbFreq +
     " General Freq: " +
     generalFreq +
-    " Height: 10";
+    " Height: " +
+    heightMultiplier;
 };
 
 const setToDefault = (type) => {
