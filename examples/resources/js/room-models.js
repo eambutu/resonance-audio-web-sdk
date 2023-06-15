@@ -68,6 +68,8 @@ let normalAudioElements = [];
 let normalSourceIds = ["sourceDButton", "sourceEButton", "sourceFButton"];
 let normalDirectivity = [];
 
+let heightMultiplier = 10;
+
 /**
  * @private
  */
@@ -92,12 +94,12 @@ function updatePositions(elements) {
 
   for (let i = 0; i < elements.length; i++) {
     let x = ((elements[i].x - 0.5) * dimensions[dimensionSelection].width) / 2;
-    let y = 0;
+    let y = heightMultiplier;
     let z = ((elements[i].y - 0.5) * dimensions[dimensionSelection].depth) / 2;
     if (i < elements.length - 1) {
       soundSources[i].setPosition(x, y, z);
     } else {
-      scene.setListenerPosition(x, y, z);
+      scene.setListenerPosition(x, 0, z);
     }
   }
 }
@@ -249,6 +251,15 @@ let onLoad = function () {
       setGeneralFreq(freq);
     });
 
+  /*
+  document
+    .getElementById("heightMultiplier")
+    .addEventListener("input", (event) => {
+      heightMultiplier = parseFloat(event.target.value);
+      updatePositions(canvasControl._elements);
+    });
+  */
+
   document
     .getElementById("roomDimensionsSelect")
     .addEventListener("change", function (event) {
@@ -358,7 +369,8 @@ const updateStats = () => {
     " Reverb Freq: " +
     reverbFreq +
     " General Freq: " +
-    generalFreq;
+    generalFreq +
+    " Height: 10";
 };
 
 const setToDefault = (type) => {
@@ -379,14 +391,14 @@ const setToDefault = (type) => {
 
 const valueDefaults = {
   close: {
-    gain: 0.2,
+    gain: 0.25,
     reverbDelay: 0.09,
     reverbGain: 0.2,
     reverbFreq: 400,
     generalFreq: 2000,
   },
   faraway: {
-    gain: 0.1,
+    gain: 0.15,
     reverbDelay: 0.09,
     reverbGain: 0.7,
     reverbFreq: 400,
