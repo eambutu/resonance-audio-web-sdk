@@ -400,7 +400,7 @@ const valueDefaults = {
   faraway: {
     gain: 0.15,
     reverbDelay: 0.09,
-    reverbGain: 0.7,
+    reverbGain: 0.6,
     reverbFreq: 400,
     generalFreq: 2000,
   },
