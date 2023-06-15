@@ -144,6 +144,9 @@ function initAudio() {
   }
 
   audioReady = true;
+
+  updatePositions(canvasControl._elements);
+  setToDefault("close");
 }
 
 let onLoad = function () {
@@ -195,6 +198,18 @@ let onLoad = function () {
   }
 
   document
+    .getElementById("switchToDefaultsA")
+    .addEventListener("click", (_) => {
+      setToDefault("close");
+    });
+
+  document
+    .getElementById("switchToDefaultsB")
+    .addEventListener("click", (_) => {
+      setToDefault("faraway");
+    });
+
+  document
     .getElementById("volumeForOther")
     .addEventListener("input", (event) => {
       const newVolume = parseInt(event.target.value) / 100;
@@ -207,46 +222,31 @@ let onLoad = function () {
     .getElementById("manualGainAdjust")
     .addEventListener("input", (event) => {
       const gain = parseFloat(event.target.value);
-      soundSources.forEach((source) => {
-        source._attenuation.setManualGain(gain);
-      });
-      updateStats();
+      setGain(gain);
     });
 
   document.getElementById("reverbDelay").addEventListener("input", (event) => {
     const delayInSecs = parseFloat(event.target.value);
-    soundSources.forEach((source) => {
-      source.simpleReverb.setDelay(delayInSecs);
-    });
-    updateStats();
+    setReverbDelay(delayInSecs);
   });
 
   document.getElementById("reverbGain").addEventListener("input", (event) => {
     const gain = parseFloat(event.target.value);
-    soundSources.forEach((source) => {
-      source.simpleReverb.setGain(gain);
-    });
-    updateStats();
+    setReverbGain(gain);
   });
 
   document
     .getElementById("reverbFreqCutoff")
     .addEventListener("input", (event) => {
       const freq = parseFloat(event.target.value);
-      soundSources.forEach((source) => {
-        source.simpleReverb.setFreq(freq);
-      });
-      updateStats();
+      setReverbFreq(freq);
     });
 
   document
     .getElementById("generalFreqCutoff")
     .addEventListener("input", (event) => {
       const freq = parseFloat(event.target.value);
-      soundSources.forEach((source) => {
-        source.setCutoffFrequency(freq);
-      });
-      updateStats();
+      setGeneralFreq(freq);
     });
 
   document
@@ -301,6 +301,47 @@ let onLoad = function () {
   selectRoomProperties();
 };
 
+const setGain = (gain) => {
+  document.getElementById("manualGainAdjust").value = gain;
+  console.log("here in set gain", soundSources);
+  soundSources.forEach((source) => {
+    source._attenuation.setManualGain(gain);
+  });
+  updateStats();
+};
+
+const setReverbDelay = (delayInSecs) => {
+  document.getElementById("reverbDelay").value = delayInSecs;
+  soundSources.forEach((source) => {
+    source.simpleReverb.setDelay(delayInSecs);
+  });
+  updateStats();
+};
+
+const setReverbGain = (gain) => {
+  document.getElementById("reverbGain").value = gain;
+  soundSources.forEach((source) => {
+    source.simpleReverb.setGain(gain);
+  });
+  updateStats();
+};
+
+const setReverbFreq = (freq) => {
+  document.getElementById("reverbFreqCutoff").value = freq;
+  soundSources.forEach((source) => {
+    source.simpleReverb.setFreq(freq);
+  });
+  updateStats();
+};
+
+const setGeneralFreq = (freq) => {
+  document.getElementById("generalFreqCutoff").value = freq;
+  soundSources.forEach((source) => {
+    source.setCutoffFrequency(freq);
+  });
+  updateStats();
+};
+
 const updateStats = () => {
   const gain = document.getElementById("manualGainAdjust").value;
   const reverbDelay = document.getElementById("reverbDelay").value;
@@ -318,6 +359,39 @@ const updateStats = () => {
     reverbFreq +
     " General Freq: " +
     generalFreq;
+};
+
+const setToDefault = (type) => {
+  if (type === "close") {
+    setGain(valueDefaults.close.gain);
+    setReverbDelay(valueDefaults.close.reverbDelay);
+    setReverbGain(valueDefaults.close.reverbGain);
+    setReverbFreq(valueDefaults.close.reverbFreq);
+    setGeneralFreq(valueDefaults.close.generalFreq);
+  } else {
+    setGain(valueDefaults.faraway.gain);
+    setReverbDelay(valueDefaults.faraway.reverbDelay);
+    setReverbGain(valueDefaults.faraway.reverbGain);
+    setReverbFreq(valueDefaults.faraway.reverbFreq);
+    setGeneralFreq(valueDefaults.faraway.generalFreq);
+  }
+};
+
+const valueDefaults = {
+  close: {
+    gain: 0.2,
+    reverbDelay: 0.09,
+    reverbGain: 0.2,
+    reverbFreq: 400,
+    generalFreq: 2000,
+  },
+  faraway: {
+    gain: 0.1,
+    reverbDelay: 0.09,
+    reverbGain: 0.7,
+    reverbFreq: 400,
+    generalFreq: 2000,
+  },
 };
 
 window.addEventListener("load", onLoad);
